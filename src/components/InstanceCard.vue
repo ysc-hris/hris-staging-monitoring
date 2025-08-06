@@ -79,7 +79,7 @@ const props = defineProps({
 const ec2Store = useEC2Store()
 const starting = ref(false)
 const showDialog = ref(false)
-const selectedWaitTime = ref('240') // Default to 4 hours
+const selectedWaitTime = ref('14400') // Default to 4 hours
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return 'N/A'
@@ -96,7 +96,7 @@ const formatDateTime = (dateTime) => {
 
 const closeDialog = () => {
   showDialog.value = false
-  selectedWaitTime.value = '240' // Reset to default
+  selectedWaitTime.value = '14400' // Reset to default
 }
 
 const confirmStart = async () => {
@@ -111,7 +111,7 @@ const confirmStart = async () => {
     alert('Failed to start instance: ' + error.message)
   } finally {
     starting.value = false
-    selectedWaitTime.value = '240' // Reset to default
+    selectedWaitTime.value = '14400' // Reset to default
   }
 }
 </script>
