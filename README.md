@@ -70,11 +70,6 @@ src/
    npm run preview
    ```
 
-6. **Deploy to S3**
-   ```bash
-   npm run deploy
-   ```
-
 ## Configuration
 
 Edit `.env` file with your AWS resources:
@@ -84,7 +79,6 @@ AWS_REGION=us-east-1
 AWS_COGNITO_USER_POOL_ID=your-user-pool-id
 AWS_COGNITO_CLIENT_ID=your-client-id
 AWS_COGNITO_IDENTITY_POOL_ID=your-identity-pool-id
-S3_BUCKET_NAME=your-s3-bucket
 APP_TITLE="HRIS Staging Monitor"
 CACHE_DURATION_MS=60000
 ```
@@ -120,11 +114,6 @@ Output includes:
 - Optimized CSS
 - Hashed assets for caching
 - index.html with injected scripts
-
-Deploy to S3:
-```bash
-aws s3 sync dist/ s3://your-bucket --delete
-```
 
 ## Security
 
