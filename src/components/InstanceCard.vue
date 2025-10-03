@@ -14,14 +14,25 @@
         {{ instance.state.toUpperCase() }}
       </span>
       
-      <button
-        v-if="instance.state === 'stopped'"
-        @click="showDialog = true"
-        :disabled="starting"
-        class="btn btn-primary"
-      >
-        {{ starting ? 'Starting...' : 'Start Instance' }}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          v-if="instance.state === 'stopped'"
+          @click="showDialog = true"
+          :disabled="starting"
+          class="btn btn-primary"
+        >
+          {{ starting ? 'Starting...' : 'Start Instance' }}
+        </button>
+
+        <button
+          v-if="instance.state === 'running'"
+          @click="confirmStop"
+          :disabled="stopping"
+          class="btn btn-secondary"
+        >
+          {{ stopping ? 'Stopping...' : 'Stop Instance' }}
+        </button>
+      </div>
     </div>
 
     <!-- Wait Time Selection Dialog -->
@@ -78,6 +89,7 @@ const props = defineProps({
 
 const ec2Store = useEC2Store()
 const starting = ref(false)
+const stopping = ref(false)
 const showDialog = ref(false)
 const selectedWaitTime = ref('14400') // Default to 4 hours
 
@@ -112,6 +124,20 @@ const confirmStart = async () => {
   } finally {
     starting.value = false
     selectedWaitTime.value = '14400' // Reset to default
+  }
+}
+
+const confirmStop = async () => {
+  if (!confirm('Are you sure you want to stop this instance?')) return
+  stopping.value = true
+
+  try {
+    await ec2Store.stopInstance(props.instance.id)
+    alert('Instance stop request sent successfully.')
+  } catch (error) {
+    alert('Failed to stop instance: ' + error.message)
+  } finally {
+    stopping.value = false
   }
 }
 </script>

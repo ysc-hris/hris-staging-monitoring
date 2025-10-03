@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { EC2Client, DescribeInstancesCommand } from '@aws-sdk/client-ec2';
-import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
+import { EC2Client, DescribeInstancesCommand, StopInstancesCommand } from '@aws-sdk/client-ec2';
+import { SFNClient, StartExecutionCommand, ListExecutionsCommand, StopExecutionCommand } from '@aws-sdk/client-sfn';
 import { useAuthStore } from './auth';
 
 const config = __APP_CONFIG__;
@@ -91,6 +91,63 @@ export const useEC2Store = defineStore('ec2', {
       });
 
       await sfnClient.send(command);
+
+      // Refresh instances after 5 seconds
+      setTimeout(() => {
+        this.fetchInstances(true);
+      }, 5000);
+    },
+
+    async stopInstance(instanceId) {
+      const authStore = useAuthStore();
+      
+      // Attempt to cancel all RUNNING Step Functions executions related to this instance's state machine
+      try {
+        const relatedInstance = this.instances.find((inst) => inst.id === instanceId);
+        const stepFunctionArn = relatedInstance?.stepFunctionArn;
+        if (stepFunctionArn) {
+          const sfnClient = new SFNClient({
+            region: config.AWS_REGION,
+            credentials: authStore.credentials,
+          });
+
+          let nextToken = undefined;
+          do {
+            const listCmd = new ListExecutionsCommand({
+              stateMachineArn: stepFunctionArn,
+              statusFilter: 'RUNNING',
+              maxResults: 100,
+              nextToken,
+            });
+            const listResp = await sfnClient.send(listCmd);
+            const executions = listResp.executions || [];
+
+            for (const execution of executions) {
+              const stopCmd = new StopExecutionCommand({
+                executionArn: execution.executionArn,
+                cause: 'Cancelled due to EC2 instance stop request',
+              });
+              await sfnClient.send(stopCmd);
+            }
+
+            nextToken = listResp.nextToken;
+          } while (nextToken);
+        }
+      } catch (err) {
+        console.error('Error cancelling Step Functions executions:', err);
+        // Proceed to stop EC2 instance regardless of Step Functions result
+      }
+
+      const ec2Client = new EC2Client({
+        region: config.AWS_REGION,
+        credentials: authStore.credentials,
+      });
+
+      const command = new StopInstancesCommand({
+        InstanceIds: [instanceId],
+      });
+
+      await ec2Client.send(command);
 
       // Refresh instances after 5 seconds
       setTimeout(() => {
