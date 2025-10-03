@@ -88,6 +88,7 @@ export const useEC2Store = defineStore('ec2', {
       const command = new StartExecutionCommand({
         stateMachineArn: stepFunctionArn,
         input: JSON.stringify({ waitTime }),
+        alias: 'staging1',
       });
 
       await sfnClient.send(command);
@@ -111,27 +112,21 @@ export const useEC2Store = defineStore('ec2', {
             credentials: authStore.credentials,
           });
 
-          let nextToken = undefined;
-          do {
-            const listCmd = new ListExecutionsCommand({
-              stateMachineArn: stepFunctionArn,
-              statusFilter: 'RUNNING',
-              maxResults: 100,
-              nextToken,
+          const listCmd = new ListExecutionsCommand({
+            stateMachineArn: stepFunctionArn,
+            statusFilter: 'RUNNING',
+            alias: 'staging1',
+          });
+          const listResp = await sfnClient.send(listCmd);
+          const executions = listResp.executions || [];
+
+          for (const execution of executions) {
+            const stopCmd = new StopExecutionCommand({
+              executionArn: execution.executionArn,
+              cause: 'Cancelled due to EC2 instance stop request',
             });
-            const listResp = await sfnClient.send(listCmd);
-            const executions = listResp.executions || [];
-
-            for (const execution of executions) {
-              const stopCmd = new StopExecutionCommand({
-                executionArn: execution.executionArn,
-                cause: 'Cancelled due to EC2 instance stop request',
-              });
-              await sfnClient.send(stopCmd);
-            }
-
-            nextToken = listResp.nextToken;
-          } while (nextToken);
+            await sfnClient.send(stopCmd);
+          }
         }
       } catch (err) {
         console.error('Error cancelling Step Functions executions:', err);
