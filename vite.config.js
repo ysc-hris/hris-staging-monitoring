@@ -25,7 +25,8 @@ export default defineConfig(({ mode }) => {
         AWS_COGNITO_CLIENT_ID: env.AWS_COGNITO_CLIENT_ID || '',
         AWS_COGNITO_IDENTITY_POOL_ID: env.AWS_COGNITO_IDENTITY_POOL_ID || '',
         APP_TITLE: env.APP_TITLE || 'HRIS Staging Monitor',
-        CACHE_DURATION_MS: parseInt(env.CACHE_DURATION_MS) || 60000
+        CACHE_DURATION_MS: parseInt(env.CACHE_DURATION_MS) || 60000,
+        STEP_FUNCTION_ARN: env.STEP_FUNCTION_ARN || ''
       })
     },
     build: {

@@ -42,7 +42,7 @@ export const useEC2Store = defineStore('ec2', {
 
         const ec2StepFunctionMapping = {
           'i-0bd02c9730001368e': {
-            'stepFunctionArn': 'arn:aws:states:us-east-1:264219311656:stateMachine:HRIS-S1-EC2-ScheduledRuntime',
+            'stepFunctionArn': config.STEP_FUNCTION_ARN,
             'frontendUrl': 'https://s1.yahshuahris.com',
             'backendUrl': 'https://s1-api.yahshuahris.com/superadmin',
           },
