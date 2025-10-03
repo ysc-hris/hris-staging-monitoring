@@ -88,7 +88,7 @@ export const useEC2Store = defineStore('ec2', {
       const command = new StartExecutionCommand({
         stateMachineArn: stepFunctionArn,
         input: JSON.stringify({ waitTime }),
-        alias: 'staging1',
+        name: 'staging1',
       });
 
       await sfnClient.send(command);
@@ -115,7 +115,7 @@ export const useEC2Store = defineStore('ec2', {
           const listCmd = new ListExecutionsCommand({
             stateMachineArn: stepFunctionArn,
             statusFilter: 'RUNNING',
-            alias: 'staging1',
+            name: 'staging1',
           });
           const listResp = await sfnClient.send(listCmd);
           const executions = listResp.executions || [];
