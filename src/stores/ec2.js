@@ -57,9 +57,9 @@ export const useEC2Store = defineStore('ec2', {
               name: nameTag?.Value || 'Unnamed Instance',
               state: instance.State.Name,
               launchTime: instance.LaunchTime,
-              stepFunctionArn: ec2StepFunctionMapping[instance.InstanceId].stepFunctionArn,
-              frontendUrl: ec2StepFunctionMapping[instance.InstanceId].frontendUrl,
-              backendUrl: ec2StepFunctionMapping[instance.InstanceId].backendUrl,
+              stepFunctionArn: ec2StepFunctionMapping[instance.InstanceId]?.stepFunctionArn,
+              frontendUrl: ec2StepFunctionMapping[instance.InstanceId]?.frontendUrl,
+              backendUrl: ec2StepFunctionMapping[instance.InstanceId]?.backendUrl,
             });
           }
         }
