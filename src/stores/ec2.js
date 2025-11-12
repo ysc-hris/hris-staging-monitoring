@@ -52,6 +52,9 @@ export const useEC2Store = defineStore('ec2', {
         for (const reservation of response.Reservations || []) {
           for (const instance of reservation.Instances || []) {
             const nameTag = instance.Tags?.find((tag) => tag.Key === 'Name');
+            if (instance.State.Name === 'terminated' || !nameTag?.Value) {
+              continue;
+            }
             instances.push({
               id: instance.InstanceId,
               name: nameTag?.Value || 'Unnamed Instance',
