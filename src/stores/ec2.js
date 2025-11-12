@@ -41,7 +41,7 @@ export const useEC2Store = defineStore('ec2', {
         const response = await ec2Client.send(command);
 
         const ec2StepFunctionMapping = {
-          'i-0bd02c9730001368e': {
+          'i-084ddd1da12ba4337': {
             'stepFunctionArn': config.STEP_FUNCTION_ARN,
             'frontendUrl': 'https://s1.yahshuahris.com',
             'backendUrl': 'https://s1-api.yahshuahris.com/superadmin',
