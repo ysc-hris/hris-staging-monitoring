@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { EC2Client, DescribeInstancesCommand, StopInstancesCommand } from '@aws-sdk/client-ec2';
+import { EC2Client, DescribeInstancesCommand } from '@aws-sdk/client-ec2';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import { SFNClient, StartExecutionCommand, ListExecutionsCommand, StopExecutionCommand } from '@aws-sdk/client-sfn';
 import { useAuthStore } from './auth';
 
@@ -82,23 +83,44 @@ export const useEC2Store = defineStore('ec2', {
     },
 
     async startInstance(stepFunctionArn, waitTime = 180) {
-      const authStore = useAuthStore();
-      const sfnClient = new SFNClient({
-        region: config.AWS_REGION,
-        credentials: authStore.credentials,
-      });
+      try {
+        const authStore = useAuthStore();
 
-      const command = new StartExecutionCommand({
-        stateMachineArn: stepFunctionArn,
-        input: JSON.stringify({ waitTime }),
-      });
+        // Invoke Lambda to trigger EC2 start
+        const lambdaClient = new LambdaClient({
+          region: config.AWS_REGION,
+          credentials: authStore.credentials,
+        });
 
-      await sfnClient.send(command);
+        const lambdaCommand = new InvokeCommand({
+          FunctionName: 'arn:aws:lambda:us-east-1:264219311656:function:s1-hris-ec2-start',
+          InvocationType: 'RequestResponse',
+          Payload: JSON.stringify({}),
+        });
 
-      // Refresh instances after 5 seconds
-      setTimeout(() => {
-        this.fetchInstances(true);
-      }, 5000);
+        await lambdaClient.send(lambdaCommand);
+
+        // Trigger Step Function execution
+        const sfnClient = new SFNClient({
+          region: config.AWS_REGION,
+          credentials: authStore.credentials,
+        });
+
+        const command = new StartExecutionCommand({
+          stateMachineArn: stepFunctionArn,
+          input: JSON.stringify({ waitTime }),
+        });
+
+        await sfnClient.send(command);
+
+        // Refresh instances after 5 seconds
+        setTimeout(() => {
+          this.fetchInstances(true);
+        }, 5000);
+      } catch (error) {
+        console.error('Error:', error);
+        throw error;
+      }
     },
 
     async stopInstance(instanceId) {
@@ -134,16 +156,19 @@ export const useEC2Store = defineStore('ec2', {
         // Proceed to stop EC2 instance regardless of Step Functions result
       }
 
-      const ec2Client = new EC2Client({
+      // Invoke Lambda to trigger EC2 start
+      const lambdaClient = new LambdaClient({
         region: config.AWS_REGION,
         credentials: authStore.credentials,
       });
 
-      const command = new StopInstancesCommand({
-        InstanceIds: [instanceId],
+      const lambdaCommand = new InvokeCommand({
+        FunctionName: 'arn:aws:lambda:us-east-1:264219311656:function:s1-hris-ec2-stop',
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({}),
       });
 
-      await ec2Client.send(command);
+      await lambdaClient.send(lambdaCommand);
 
       // Refresh instances after 5 seconds
       setTimeout(() => {
